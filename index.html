@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Cabina Live - Noche Cultural El Buen Pastor</title>
+    <!-- Firebase SDK (v9 Compat) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    
+    <style>
+        :root {
+            --bg: #0b0f19;
+            --card-bg: #151c2c;
+            --accent: #38bdf8;
+            --accent-glow: rgba(56, 189, 248, 0.2);
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #243049;
+            --success: #22c55e;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+        }
+
+        * { box-sizing: border-box; touch-action: manipulation; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 12px;
+            padding-bottom: 90px;
+        }
+
+        /* LOGIN OVERLAY */
+        #loginOverlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(11, 15, 25, 0.96);
+            backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .login-box {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            padding: 25px;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 380px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            text-align: center;
+        }
+
+        .login-box h2 { color: var(--accent); margin-top: 0; font-size: 1.4rem; }
+
+        header {
+            text-align: center;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .app-title {
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin: 0;
+        }
+
+        .user-tag {
+            font-size: 0.75rem;
+            background: var(--border);
+            color: var(--text-muted);
+            padding: 3px 8px;
+            border-radius: 12px;
+            display: inline-block;
+            margin-top: 4px;
+        }
+
+        .toolbar {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            flex-wrap: wrap;
+            position: sticky;
+            top: 8px;
+            z-index: 100;
+            background: rgba(15, 23, 42, 0.92);
+            padding: 8px;
+            border-radius: 12px;
+            backdrop-filter: blur(8px);
+            border: 1px solid var(--border);
+            margin-bottom: 15px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 15px;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 14px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+            position: relative;
+            transition: all 0.2s;
+        }
+
+        .card.locked input, .card.locked select, .card.locked textarea {
+            pointer-events: none;
+            opacity: 0.85;
+            background: #0d1320;
+            border-color: transparent;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 8px;
+            margin-bottom: 10px;
+            gap: 8px;
+        }
+
+        .num-badge {
+            background: var(--accent);
+            color: #000;
+            font-weight: bold;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+        }
+
+        .form-group { margin-bottom: 10px; }
+        label {
+            display: block;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            margin-bottom: 4px;
+            color: var(--accent);
+            font-weight: 700;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            background: #0b0f19;
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 9px;
+            border-radius: 8px;
+            font-size: 0.88rem;
+            outline: none;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px var(--accent-glow);
+        }
+
+        /* Audio Tracks Sub-Section */
+        .audio-track-box {
+            background: rgba(0,0,0,0.2);
+            border: 1px solid var(--border);
+            padding: 8px;
+            border-radius: 8px;
+            margin-bottom: 6px;
+        }
+        .track-title {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+            font-weight: bold;
+        }
+
+        /* Checkboxes */
+        .check-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 6px 0;
+        }
+        .check-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+        .check-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--success);
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 6px;
+        }
+        .radio-btn {
+            flex: 1;
+            text-align: center;
+            background: #0b0f19;
+            border: 1px solid var(--border);
+            padding: 8px 4px;
+            border-radius: 8px;
+            font-size: 0.78rem;
+            cursor: pointer;
+        }
+        .radio-btn.active {
+            background: var(--accent);
+            color: #000;
+            font-weight: bold;
+            border-color: var(--accent);
+        }
+        .radio-btn input { display: none; }
+
+        button {
+            background: var(--accent);
+            color: #000;
+            border: none;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        button.secondary { background: var(--border); color: var(--text); }
+        button.success { background: var(--success); color: #fff; }
+        button.warning { background: var(--warning); color: #000; }
+        button.lock-btn { background: #334155; color: #fff; }
+        button.lock-btn.unlocked { background: var(--danger); }
+
+        textarea.large-notes {
+            min-height: 85px;
+            resize: vertical;
+        }
+    </style>
+</head>
+<body>
+
+<!-- LOGIN POPUP -->
+<div id="loginOverlay">
+    <div class="login-box">
+        <h2>🎛️ Acceso a Cabina Live</h2>
+        <div class="form-group" style="text-align: left;">
+            <label>Usuario</label>
+            <select id="loginUser">
+                <option value="produccion1">produccion1</option>
+                <option value="produccion2">produccion2</option>
+                <option value="floormanager">floormanager</option>
+                <option value="lucesvps">lucesvps</option>
+            </select>
+        </div>
+        <div class="form-group" style="text-align: left;">
+            <label>Contraseña</label>
+            <input type="password" id="loginPass" placeholder="Ingrese contraseña">
+        </div>
+        <button onclick="attemptLogin()" style="width: 100%; justify-content: center; margin-top: 15px;">Ingresar al Show</button>
+        <p id="loginError" style="color: var(--danger); font-size: 0.8rem; display:none; margin-top: 10px;">Contraseña incorrecta</p>
+    </div>
+</div>
+
+<header>
+    <div class="app-title">🎛️ Cabina Live - Noche Cultural</div>
+    <span class="user-tag" id="userDisplay">Operador: No identificado</span>
+</header>
+
+<div class="toolbar">
+    <button onclick="addCard()">➕ Presentación</button>
+    <button id="lockToggleBtn" class="lock-btn" onclick="toggleEditMode()">🔒 Modo Lectura</button>
+    <button class="success" onclick="saveToCloud()">☁️ Sincronizar Firebase</button>
+    <button class="secondary" onclick="window.print()">🖨️ PDF</button>
+</div>
+
+<div class="grid" id="cardsContainer"></div>
+
+<script>
+    // CONFIGURACIÓN DE FIREBASE (Reemplaza con tus datos de Firebase Console si activas la nube)
+    const firebaseConfig = {
+        databaseURL: "https://TU-PROYECTO-FIREBASE-default-rtdb.firebaseio.com/"
+    };
+    
+    // Inicializar Firebase si existe URL válida
+    let db = null;
+    if (firebaseConfig.databaseURL.includes("firebaseio.com")) {
+        firebase.initializeApp(firebaseConfig);
+        db = firebase.database();
+    }
+
+    const USERS = {
+        "produccion1": "VPSaudio1",
+        "produccion2": "VPSaudio1",
+        "floormanager": "VPSaudio1",
+        "lucesvps": "VPSaudio1"
+    };
+
+    let currentUser = "";
+    let isEditMode = true;
+
+    function attemptLogin() {
+        const user = document.getElementById('loginUser').value;
+        const pass = document.getElementById('loginPass').value;
+
+        if (USERS[user] && USERS[user] === pass) {
+            currentUser = user;
+            document.getElementById('userDisplay').innerText = "Operador: " + user;
+            document.getElementById('loginOverlay').style.display = 'none';
+            loadData();
+        } else {
+            document.getElementById('loginError').style.display = 'block';
+        }
+    }
+
+    const container = document.getElementById('cardsContainer');
+    const STORAGE_KEY = 'cabina_noche_cultural_v2';
+
+    function createCardHTML(id, data = {}) {
+        return `
+        <div class="card ${!isEditMode ? 'locked' : ''}" id="card-${id}">
+            <div class="card-header">
+                <span class="num-badge">#<span class="card-num"></span></span>
+                <input type="text" class="title-input" value="${data.title || ''}" placeholder="Acto / Presentación" style="font-weight:bold; width: 65%;">
+                <button style="background:transparent; color:var(--danger); border:none; cursor:pointer;" onclick="deleteCard('card-${id}')">🗑️</button>
+            </div>
+
+            <div class="form-group">
+                <label>Líder / Encargado</label>
+                <input type="text" class="leader-input" value="${data.leader || ''}" placeholder="Profesor o estudiante a cargo">
+            </div>
+
+            <div class="form-group">
+                <label>Grado / Salones Involucrados</label>
+                <input type="text" class="grade-input" value="${data.grade || ''}" placeholder="Ej: 7°A o Grupo Multigrado (1° a 6°)">
+            </div>
+
+            <div class="form-group">
+                <label>Soportes de Producción</label>
+                <div class="check-group">
+                    <label class="check-item"><input type="checkbox" class="chk-song" ${data.song ? 'checked' : ''}> 🎵 Audio</label>
+                    <label class="check-item"><input type="checkbox" class="chk-video" ${data.video ? 'checked' : ''}> 🎬 Video</label>
+                    <label class="check-item"><input type="checkbox" class="chk-lights" ${data.lights ? 'checked' : ''}> 💡 Luces</label>
+                    <label class="check-item"><input type="checkbox" class="chk-post" ${data.post ? 'checked' : ''}> 📹 Post-Prod</label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Forma de Inicio de Presentación</label>
+                <div class="radio-group">
+                    <label class="radio-btn ${data.startMode === 'senas' ? 'active' : ''}" onclick="selectRadio(this)">
+                        <input type="radio" name="start-${id}" value="senas" ${data.startMode === 'senas' ? 'checked' : ''}> 🖐️ Señal de Encargado
+                    </label>
+                    <label class="radio-btn ${data.startMode === 'formados' ? 'active' : ''}" onclick="selectRadio(this)">
+                        <input type="radio" name="start-${id}" value="formados" ${data.startMode === 'formados' ? 'checked' : ''}> 🧍 Al Estar Formados
+                    </label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Detalles de Pistas y Audio (Hasta 3 Pistas)</label>
+                
+                <!-- Pista 1 -->
+                <div class="audio-track-box">
+                    <div class="track-title">Pista 1 (Principal)</div>
+                    <input type="text" class="t1-name" value="${data.t1Name || ''}" placeholder="Nombre de archivo / Canción" style="margin-bottom:4px;">
+                    <div style="display:flex; gap:4px;">
+                        <input type="text" class="t1-dur" value="${data.t1Dur || ''}" placeholder="Duración" style="flex:1;">
+                        <select class="t1-mode" style="flex:1.5;">
+                            <option value="completa" ${data.t1Mode === 'completa' ? 'selected' : ''}>Completa</option>
+                            <option value="corte" ${data.t1Mode === 'corte' ? 'selected' : ''}>Cortar en min X</option>
+                            <option value="fade" ${data.t1Mode === 'fade' ? 'selected' : ''}>Fade Out</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Pista 2 -->
+                <div class="audio-track-box">
+                    <div class="track-title">Pista 2 (Entrada / Efecto)</div>
+                    <input type="text" class="t2-name" value="${data.t2Name || ''}" placeholder="Opcional" style="margin-bottom:4px;">
+                    <div style="display:flex; gap:4px;">
+                        <input type="text" class="t2-dur" value="${data.t2Dur || ''}" placeholder="Duración" style="flex:1;">
+                        <select class="t2-mode" style="flex:1.5;">
+                            <option value="completa" ${data.t2Mode === 'completa' ? 'selected' : ''}>Completa</option>
+                            <option value="corte" ${data.t2Mode === 'corte' ? 'selected' : ''}>Cortar en min X</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Pista 3 -->
+                <div class="audio-track-box">
+                    <div class="track-title">Pista 3 (Salida / Cierre)</div>
+                    <input type="text" class="t3-name" value="${data.t3Name || ''}" placeholder="Opcional" style="margin-bottom:4px;">
+                    <div style="display:flex; gap:4px;">
+                        <input type="text" class="t3-dur" value="${data.t3Dur || ''}" placeholder="Duración" style="flex:1;">
+                        <select class="t3-mode" style="flex:1.5;">
+                            <option value="completa" ${data.t3Mode === 'completa' ? 'selected' : ''}>Completa</option>
+                            <option value="fade" ${data.t3Mode === 'fade' ? 'selected' : ''}>Fade Out</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Micrófonos en Escenario</label>
+                <div style="display: flex; gap: 6px; align-items: center;">
+                    <label class="check-item"><input type="checkbox" class="chk-mics" ${data.hasMics ? 'checked' : ''}> Mics</label>
+                    <input type="number" class="mic-qty" value="${data.micQty || ''}" placeholder="Cant." style="width: 65px;">
+                    <input type="text" class="mic-type" value="${data.micType || ''}" placeholder="Tipo (Atril, Inalámbricos...)">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Detalles Especiales / Luces / Notas Tácticas</label>
+                <textarea class="large-notes" placeholder="Escribe aquí notas detalladas de iluminación, cambios de escena o indicaciones técnicas...">${data.notes || ''}</textarea>
+            </div>
+        </div>
+        `;
+    }
+
+    function addCard(data = {}) {
+        const id = Date.now() + Math.random().toString(36).substr(2, 4);
+        container.insertAdjacentHTML('beforeend', createCardHTML(id, data));
+        updateCardNumbers();
+    }
+
+    function deleteCard(cardId) {
+        if(!isEditMode) return alert("Desbloquea el modo edición primero.");
+        if(confirm('¿Eliminar esta presentación?')) {
+            document.getElementById(cardId).remove();
+            updateCardNumbers();
+            saveToCloud();
+        }
+    }
+
+    function selectRadio(element) {
+        if(!isEditMode) return;
+        const parent = element.parentElement;
+        parent.querySelectorAll('.radio-btn').forEach(btn => {
+            btn.classList.remove('active');
+            btn.querySelector('input').checked = false;
+        });
+        element.classList.add('active');
+        element.querySelector('input').checked = true;
+    }
+
+    function updateCardNumbers() {
+        const cards = container.querySelectorAll('.card');
+        cards.forEach((card, index) => {
+            card.querySelector('.card-num').innerText = index + 1;
+        });
+    }
+
+    function toggleEditMode() {
+        isEditMode = !isEditMode;
+        const btn = document.getElementById('lockToggleBtn');
+        const cards = document.querySelectorAll('.card');
+
+        if (isEditMode) {
+            btn.innerText = "🔒 Bloquear Edición";
+            btn.classList.add('unlocked');
+            cards.forEach(c => c.classList.remove('locked'));
+        } else {
+            btn.innerText = "✏️ Permitir Editar";
+            btn.classList.remove('unlocked');
+            cards.forEach(c => c.classList.add('locked'));
+            saveToCloud();
+        }
+    }
+
+    function collectData() {
+        const cards = container.querySelectorAll('.card');
+        const cardsData = [];
+
+        cards.forEach(card => {
+            const selectedRadio = card.querySelector('.radio-group input[type="radio"]:checked');
+            cardsData.push({
+                title: card.querySelector('.title-input').value,
+                leader: card.querySelector('.leader-input').value,
+                grade: card.querySelector('.grade-input').value,
+                song: card.querySelector('.chk-song').checked,
+                video: card.querySelector('.chk-video').checked,
+                lights: card.querySelector('.chk-lights').checked,
+                post: card.querySelector('.chk-post').checked,
+                startMode: selectedRadio ? selectedRadio.value : '',
+                
+                t1Name: card.querySelector('.t1-name').value,
+                t1Dur: card.querySelector('.t1-dur').value,
+                t1Mode: card.querySelector('.t1-mode').value,
+
+                t2Name: card.querySelector('.t2-name').value,
+                t2Dur: card.querySelector('.t2-dur').value,
+                t2Mode: card.querySelector('.t2-mode').value,
+
+                t3Name: card.querySelector('.t3-name').value,
+                t3Dur: card.querySelector('.t3-dur').value,
+                t3Mode: card.querySelector('.t3-mode').value,
+
+                hasMics: card.querySelector('.chk-mics').checked,
+                micQty: card.querySelector('.mic-qty').value,
+                micType: card.querySelector('.mic-type').value,
+                notes: card.querySelector('.large-notes').value
+            });
+        });
+
+        return cardsData;
+    }
+
+    function saveToCloud() {
+        const data = collectData();
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+
+        if (db) {
+            db.ref('noche_cultural/presentaciones').set(data);
+        }
+    }
+
+    function loadData() {
+        container.innerHTML = '';
+
+        if (db) {
+            db.ref('noche_cultural/presentaciones').on('value', (snapshot) => {
+                const cloudData = snapshot.val();
+                if (cloudData) {
+                    container.innerHTML = '';
+                    cloudData.forEach(d => addCard(d));
+                    return;
+                }
+            });
+        }
+
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+            const cardsData = JSON.parse(saved);
+            if(cardsData.length > 0) {
+                cardsData.forEach(data => addCard(data));
+                return;
+            }
+        }
+
+        addCard(); addCard(); addCard();
+    }
+</script>
+</body>
+</html>
