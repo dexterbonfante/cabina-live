@@ -4,20 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Cabina Live - Noche Cultural El Buen Pastor</title>
-    <!-- Firebase SDK (v9 Compat) -->
+    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     
     <style>
         :root {
-            --bg: #0b0f19;
-            --card-bg: #151c2c;
+            --bg: #050811;
+            --card-bg: rgba(15, 23, 42, 0.85);
             --accent: #38bdf8;
-            --accent-glow: rgba(56, 189, 248, 0.2);
+            --accent-neon: #00f0ff;
+            --accent-glow: rgba(56, 189, 248, 0.3);
             --text: #f8fafc;
             --text-muted: #94a3b8;
-            --border: #243049;
-            --success: #22c55e;
+            --border: rgba(56, 189, 248, 0.2);
+            --success: #10b981;
             --danger: #ef4444;
             --warning: #f59e0b;
         }
@@ -25,20 +26,37 @@
         * { box-sizing: border-box; touch-action: manipulation; }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: radial-gradient(circle at 50% 20%, #0f172a 0%, #050811 100%);
+            background-attachment: fixed;
             color: var(--text);
             margin: 0;
             padding: 12px;
             padding-bottom: 90px;
+            overflow-x: hidden;
+        }
+
+        /* FONDO ESPACIAL AMBIENTAL */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: 
+                radial-gradient(1.5px 1.5px at 20px 30px, #fff, rgba(0,0,0,0)),
+                radial-gradient(1px 1px at 40px 70px, var(--accent-neon), rgba(0,0,0,0)),
+                radial-gradient(2px 2px at 150px 180px, #fff, rgba(0,0,0,0));
+            background-repeat: repeat;
+            background-size: 250px 250px;
+            opacity: 0.3;
+            z-index: -1;
         }
 
         /* LOGIN OVERLAY */
         #loginOverlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(11, 15, 25, 0.96);
-            backdrop-filter: blur(10px);
+            background: rgba(5, 8, 17, 0.95);
+            backdrop-filter: blur(12px);
             display: flex;
             justify-content: center;
             align-items: center;
@@ -46,80 +64,141 @@
         }
 
         .login-box {
-            background: var(--card-bg);
-            border: 1px solid var(--border);
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid var(--accent);
             padding: 25px;
-            border-radius: 16px;
+            border-radius: 20px;
             width: 90%;
             max-width: 380px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            box-shadow: 0 0 30px var(--accent-glow);
             text-align: center;
         }
-
-        .login-box h2 { color: var(--accent); margin-top: 0; font-size: 1.4rem; }
 
         header {
             text-align: center;
-            margin-bottom: 12px;
-            padding-bottom: 8px;
-            border-bottom: 1px solid var(--border);
+            margin-bottom: 15px;
         }
 
         .app-title {
-            font-size: 1.2rem;
-            font-weight: 800;
-            color: var(--accent);
+            font-size: 1.3rem;
+            font-weight: 900;
+            color: var(--accent-neon);
             text-transform: uppercase;
-            letter-spacing: 1px;
-            margin: 0;
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px var(--accent-glow);
         }
 
         .user-tag {
             font-size: 0.75rem;
-            background: var(--border);
-            color: var(--text-muted);
-            padding: 3px 8px;
-            border-radius: 12px;
+            background: rgba(56, 189, 248, 0.1);
+            border: 1px solid var(--border);
+            color: var(--accent);
+            padding: 4px 12px;
+            border-radius: 20px;
             display: inline-block;
-            margin-top: 4px;
+            margin-top: 5px;
         }
 
+        .sync-status {
+            font-size: 0.75rem;
+            font-weight: bold;
+            padding: 3px 8px;
+            border-radius: 12px;
+            margin-left: 6px;
+        }
+        .status-online { background: rgba(16, 185, 129, 0.2); color: var(--success); }
+
+        /* BARRA SUPERIOR Y BOTONES 3D */
         .toolbar {
             display: flex;
-            gap: 8px;
+            gap: 10px;
             justify-content: center;
             flex-wrap: wrap;
             position: sticky;
             top: 8px;
             z-index: 100;
-            background: rgba(15, 23, 42, 0.92);
-            padding: 8px;
-            border-radius: 12px;
-            backdrop-filter: blur(8px);
+            background: rgba(15, 23, 42, 0.85);
+            padding: 10px;
+            border-radius: 16px;
+            backdrop-filter: blur(12px);
             border: 1px solid var(--border);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
             margin-bottom: 15px;
+        }
+
+        /* ESTILO GENERAL DE BOTONES 3D */
+        .btn-3d {
+            background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-bottom: 3px solid #020617;
+            padding: 10px 16px;
+            border-radius: 10px;
+            font-weight: 800;
+            cursor: pointer;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            transition: all 0.1s ease;
+        }
+        .btn-3d:active {
+            transform: translateY(2px);
+            border-bottom-width: 1px;
+            box-shadow: none;
+        }
+
+        .btn-3d.save-btn {
+            background: linear-gradient(180deg, #059669 0%, #047857 100%);
+            color: #fff;
+            border-color: var(--success);
+            border-bottom: 3px solid #064e3b;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+        }
+
+        .btn-3d.lock-btn {
+            background: linear-gradient(180deg, #334155 0%, #1e293b 100%);
+            border-bottom: 3px solid #0f172a;
+        }
+        .btn-3d.lock-btn.unlocked {
+            background: linear-gradient(180deg, #dc2626 0%, #991b1b 100%);
+            border-color: var(--danger);
+            border-bottom: 3px solid #7f1d1d;
+        }
+
+        .search-bar {
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto 15px auto;
+            display: block;
         }
 
         .grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 15px;
+            grid-template-columns: repeat(auto-fit, minmax(330px, 1fr));
+            gap: 16px;
         }
 
+        /* TARJETAS 3D / GLASSMORPHISM */
         .card {
-            background-color: var(--card-bg);
+            background: var(--card-bg);
             border: 1px solid var(--border);
-            border-radius: 14px;
-            padding: 14px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+            border-radius: 16px;
+            padding: 16px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.4);
             position: relative;
-            transition: all 0.2s;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+        .card:hover {
+            border-color: rgba(56, 189, 248, 0.4);
         }
 
         .card.locked input, .card.locked select, .card.locked textarea {
             pointer-events: none;
-            opacity: 0.85;
-            background: #0d1320;
+            opacity: 0.8;
+            background: rgba(5, 8, 17, 0.6);
             border-color: transparent;
         }
 
@@ -128,18 +207,19 @@
             justify-content: space-between;
             align-items: center;
             border-bottom: 1px solid var(--border);
-            padding-bottom: 8px;
-            margin-bottom: 10px;
-            gap: 8px;
+            padding-bottom: 10px;
+            margin-bottom: 12px;
+            gap: 6px;
         }
 
         .num-badge {
-            background: var(--accent);
+            background: var(--accent-neon);
             color: #000;
-            font-weight: bold;
-            padding: 3px 10px;
+            font-weight: 900;
+            padding: 4px 10px;
             border-radius: 20px;
-            font-size: 0.85rem;
+            font-size: 0.9rem;
+            box-shadow: 0 0 8px var(--accent-glow);
         }
 
         .form-group { margin-bottom: 10px; }
@@ -147,15 +227,15 @@
             display: block;
             font-size: 0.7rem;
             text-transform: uppercase;
-            letter-spacing: 0.6px;
+            letter-spacing: 0.8px;
             margin-bottom: 4px;
             color: var(--accent);
-            font-weight: 700;
+            font-weight: 800;
         }
 
         input, select, textarea {
             width: 100%;
-            background: #0b0f19;
+            background: rgba(5, 8, 17, 0.8);
             border: 1px solid var(--border);
             color: var(--text);
             padding: 9px;
@@ -165,16 +245,15 @@
         }
 
         input:focus, select:focus, textarea:focus {
-            border-color: var(--accent);
-            box-shadow: 0 0 0 2px var(--accent-glow);
+            border-color: var(--accent-neon);
+            box-shadow: 0 0 8px var(--accent-glow);
         }
 
-        /* Audio Tracks Sub-Section */
         .audio-track-box {
-            background: rgba(0,0,0,0.2);
-            border: 1px solid var(--border);
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.05);
             padding: 8px;
-            border-radius: 8px;
+            border-radius: 10px;
             margin-bottom: 6px;
         }
         .track-title {
@@ -184,7 +263,6 @@
             font-weight: bold;
         }
 
-        /* Checkboxes */
         .check-group {
             display: flex;
             gap: 10px;
@@ -204,14 +282,11 @@
             accent-color: var(--success);
         }
 
-        .radio-group {
-            display: flex;
-            gap: 6px;
-        }
+        .radio-group { display: flex; gap: 6px; }
         .radio-btn {
             flex: 1;
             text-align: center;
-            background: #0b0f19;
+            background: rgba(5, 8, 17, 0.8);
             border: 1px solid var(--border);
             padding: 8px 4px;
             border-radius: 8px;
@@ -222,32 +297,22 @@
             background: var(--accent);
             color: #000;
             font-weight: bold;
-            border-color: var(--accent);
+            border-color: var(--accent-neon);
         }
         .radio-btn input { display: none; }
 
-        button {
-            background: var(--accent);
-            color: #000;
-            border: none;
-            padding: 10px 14px;
-            border-radius: 8px;
-            font-weight: 700;
-            cursor: pointer;
-            font-size: 0.85rem;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-        button.secondary { background: var(--border); color: var(--text); }
-        button.success { background: var(--success); color: #fff; }
-        button.warning { background: var(--warning); color: #000; }
-        button.lock-btn { background: #334155; color: #fff; }
-        button.lock-btn.unlocked { background: var(--danger); }
-
         textarea.large-notes {
-            min-height: 85px;
+            min-height: 90px;
             resize: vertical;
+        }
+
+        .btn-move {
+            background: #1e293b;
+            color: var(--text);
+            border: 1px solid var(--border);
+            padding: 4px 8px;
+            border-radius: 6px;
+            cursor: pointer;
         }
     </style>
 </head>
@@ -256,9 +321,9 @@
 <!-- LOGIN POPUP -->
 <div id="loginOverlay">
     <div class="login-box">
-        <h2>🎛️ Acceso a Cabina Live</h2>
+        <h2>🎛️ Acceso Cabina Live</h2>
         <div class="form-group" style="text-align: left;">
-            <label>Usuario</label>
+            <label>Usuario / Rol</label>
             <select id="loginUser">
                 <option value="produccion1">produccion1</option>
                 <option value="produccion2">produccion2</option>
@@ -270,7 +335,7 @@
             <label>Contraseña</label>
             <input type="password" id="loginPass" placeholder="Ingrese contraseña">
         </div>
-        <button onclick="attemptLogin()" style="width: 100%; justify-content: center; margin-top: 15px;">Ingresar al Show</button>
+        <button class="btn-3d save-btn" onclick="attemptLogin()" style="width: 100%; justify-content: center; margin-top: 15px;">Ingresar al Show</button>
         <p id="loginError" style="color: var(--danger); font-size: 0.8rem; display:none; margin-top: 10px;">Contraseña incorrecta</p>
     </div>
 </div>
@@ -278,24 +343,26 @@
 <header>
     <div class="app-title">🎛️ Cabina Live - Noche Cultural</div>
     <span class="user-tag" id="userDisplay">Operador: No identificado</span>
+    <span class="sync-status status-online" id="syncStatus">● Sincronizado</span>
 </header>
 
 <div class="toolbar">
-    <button onclick="addCard()">➕ Presentación</button>
-    <button id="lockToggleBtn" class="lock-btn" onclick="toggleEditMode()">🔒 Modo Lectura</button>
-    <button class="success" onclick="saveToCloud()">☁️ Sincronizar Firebase</button>
-    <button class="secondary" onclick="window.print()">🖨️ PDF</button>
+    <button class="btn-3d" onclick="addCard()">➕ Presentación</button>
+    <button class="btn-3d save-btn" onclick="saveToCloud(true)">💾 GUARDAR AHORA</button>
+    <button id="lockToggleBtn" class="btn-3d lock-btn" onclick="toggleEditMode()">🔒 Modo Lectura</button>
+    <button class="btn-3d" onclick="window.print()">🖨️ Imprimir PDF</button>
 </div>
+
+<input type="text" id="searchInput" class="search-bar" placeholder="🔍 Buscar presentación, grado o tema..." onkeyup="filterCards()">
 
 <div class="grid" id="cardsContainer"></div>
 
 <script>
-    // CONFIGURACIÓN DE FIREBASE (Reemplaza con tus datos de Firebase Console si activas la nube)
+    // CONFIGURACIÓN DE FIREBASE (Base intacta)
     const firebaseConfig = {
         databaseURL: "https://test-dextune-default-rtdb.firebaseio.com/"
     };
     
-    // Inicializar Firebase si existe URL válida
     let db = null;
     if (firebaseConfig.databaseURL.includes("firebaseio.com")) {
         firebase.initializeApp(firebaseConfig);
@@ -311,6 +378,8 @@
 
     let currentUser = "";
     let isEditMode = true;
+    const container = document.getElementById('cardsContainer');
+    const STORAGE_KEY = 'cabina_noche_cultural_v2';
 
     function attemptLogin() {
         const user = document.getElementById('loginUser').value;
@@ -326,15 +395,16 @@
         }
     }
 
-    const container = document.getElementById('cardsContainer');
-    const STORAGE_KEY = 'cabina_noche_cultural_v2';
-
     function createCardHTML(id, data = {}) {
         return `
         <div class="card ${!isEditMode ? 'locked' : ''}" id="card-${id}">
             <div class="card-header">
+                <div style="display:flex; gap:3px;">
+                    <button class="btn-move" onclick="moveCard('card-${id}', -1)">▲</button>
+                    <button class="btn-move" onclick="moveCard('card-${id}', 1)">▼</button>
+                </div>
                 <span class="num-badge">#<span class="card-num"></span></span>
-                <input type="text" class="title-input" value="${data.title || ''}" placeholder="Acto / Presentación" style="font-weight:bold; width: 65%;">
+                <input type="text" class="title-input" value="${data.title || ''}" placeholder="Acto / Presentación" style="font-weight:bold; width: 55%;">
                 <button style="background:transparent; color:var(--danger); border:none; cursor:pointer;" onclick="deleteCard('card-${id}')">🗑️</button>
             </div>
 
@@ -373,7 +443,6 @@
             <div class="form-group">
                 <label>Detalles de Pistas y Audio (Hasta 3 Pistas)</label>
                 
-                <!-- Pista 1 -->
                 <div class="audio-track-box">
                     <div class="track-title">Pista 1 (Principal)</div>
                     <input type="text" class="t1-name" value="${data.t1Name || ''}" placeholder="Nombre de archivo / Canción" style="margin-bottom:4px;">
@@ -387,7 +456,6 @@
                     </div>
                 </div>
 
-                <!-- Pista 2 -->
                 <div class="audio-track-box">
                     <div class="track-title">Pista 2 (Entrada / Efecto)</div>
                     <input type="text" class="t2-name" value="${data.t2Name || ''}" placeholder="Opcional" style="margin-bottom:4px;">
@@ -400,7 +468,6 @@
                     </div>
                 </div>
 
-                <!-- Pista 3 -->
                 <div class="audio-track-box">
                     <div class="track-title">Pista 3 (Salida / Cierre)</div>
                     <input type="text" class="t3-name" value="${data.t3Name || ''}" placeholder="Opcional" style="margin-bottom:4px;">
@@ -419,13 +486,13 @@
                 <div style="display: flex; gap: 6px; align-items: center;">
                     <label class="check-item"><input type="checkbox" class="chk-mics" ${data.hasMics ? 'checked' : ''}> Mics</label>
                     <input type="number" class="mic-qty" value="${data.micQty || ''}" placeholder="Cant." style="width: 65px;">
-                    <input type="text" class="mic-type" value="${data.micType || ''}" placeholder="Tipo (Atril, Inalámbricos...)">
+                    <input type="text" class="mic-type" value="${data.micType || ''}" placeholder="Tipo (Atril, Handheld...)">
                 </div>
             </div>
 
             <div class="form-group">
-                <label>Detalles Especiales / Luces / Notas Tácticas</label>
-                <textarea class="large-notes" placeholder="Escribe aquí notas detalladas de iluminación, cambios de escena o indicaciones técnicas...">${data.notes || ''}</textarea>
+                <label>Notas Tácticas / Luces / Escena</label>
+                <textarea class="large-notes" placeholder="Notas detalladas de iluminación, voces o efectos...">${data.notes || ''}</textarea>
             </div>
         </div>
         `;
@@ -444,6 +511,18 @@
             updateCardNumbers();
             saveToCloud();
         }
+    }
+
+    function moveCard(cardId, direction) {
+        if(!isEditMode) return alert("Desbloquea el modo edición primero.");
+        const card = document.getElementById(cardId);
+        if (direction === -1 && card.previousElementSibling) {
+            container.insertBefore(card, card.previousElementSibling);
+        } else if (direction === 1 && card.nextElementSibling) {
+            container.insertBefore(card.nextElementSibling, card);
+        }
+        updateCardNumbers();
+        saveToCloud();
     }
 
     function selectRadio(element) {
@@ -470,7 +549,7 @@
         const cards = document.querySelectorAll('.card');
 
         if (isEditMode) {
-            btn.innerText = "🔒 Bloquear Edición";
+            btn.innerText = "🔒 Modo Lectura";
             btn.classList.add('unlocked');
             cards.forEach(c => c.classList.remove('locked'));
         } else {
@@ -479,6 +558,14 @@
             cards.forEach(c => c.classList.add('locked'));
             saveToCloud();
         }
+    }
+
+    function filterCards() {
+        const q = document.getElementById('searchInput').value.toLowerCase();
+        document.querySelectorAll('.card').forEach(card => {
+            const text = card.innerText.toLowerCase() + " " + Array.from(card.querySelectorAll('input, textarea')).map(i => i.value.toLowerCase()).join(" ");
+            card.style.display = text.includes(q) ? 'block' : 'none';
+        });
     }
 
     function collectData() {
@@ -519,12 +606,14 @@
         return cardsData;
     }
 
-    function saveToCloud() {
+    function saveToCloud(showNotify = false) {
         const data = collectData();
         localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
 
         if (db) {
-            db.ref('noche_cultural/presentaciones').set(data);
+            db.ref('noche_cultural/presentaciones').set(data).then(() => {
+                if(showNotify) alert("💾 ¡Guardado y sincronizado en la nube exitosamente!");
+            });
         }
     }
 
